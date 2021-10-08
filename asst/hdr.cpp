@@ -73,13 +73,13 @@ Image makeHDR(vector<Image> &imSeq, float epsilonMini, float epsilonMaxi) {
   for (int n = 1; n < imSeq.size(); n++) { // Iterate over all and make factor compared to first image
     if (n == imSeq.size() - 1) {
       Image weight = computeWeight(imSeq.at(n), 0.0f, epsilonMaxi); // In brightest case, don't chop darkest
-      k_i.push_back(computeFactor(imSeq.at(n - 1), weights.at(weights.size() - 1), imSeq.at(n), weight));
-      weights.push_back(weight);
+      k_i.push_back(computeFactor(imSeq.at(n - 1), weights.at(weights.size() - 1), imSeq.at(n), weight)); 
+      weights.push_back(weight); // For line above, use weight from previous image and not against im_0
     }
     else {
       Image weight = computeWeight(imSeq.at(n), epsilonMini, epsilonMaxi); // Use epsilons in normal case
       k_i.push_back(computeFactor(imSeq.at(n - 1), weights.at(weights.size() - 1), imSeq.at(n), weight));
-      weights.push_back(weight);
+      weights.push_back(weight); // For line above, use weight from previous image and not against im_0
     }
   }
 
@@ -99,7 +99,6 @@ Image makeHDR(vector<Image> &imSeq, float epsilonMini, float epsilonMaxi) {
       }
     }
   }
-
   return output; // Return output HDR image
 }
 
