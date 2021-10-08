@@ -172,8 +172,8 @@ int main() {
   // cout << "nothing done in a4_main.cpp, debug me !" << endl;
 
   // testComputeWeight();
-  testComputeFactor();
-  // testMakeHDR();
+  // testComputeFactor();
+  testMakeHDR();
   // testToneMapping_ante2();
   // testToneMapping_ante3();
   // testToneMapping_boston();

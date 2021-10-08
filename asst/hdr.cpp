@@ -21,7 +21,7 @@ Image computeWeight(const Image &im, float epsilonMini, float epsilonMaxi) {
   for (int h = 0; h < output.height(); h++) {
     for (int w = 0; w < output.width(); w++) {
       for (int c = 0; c < output.channels(); c++) {
-        if ((im(w, h, c) <= 0.99) && (im(w, h, c) >= 0.002)) {
+        if ((im(w, h, c) <= epsilonMaxi) && (im(w, h, c) >= epsilonMini)) {
           output(w, h, c) = 1.0f; // 1 if inside range
         }
         else {
@@ -30,7 +30,7 @@ Image computeWeight(const Image &im, float epsilonMini, float epsilonMaxi) {
       }
     }
   }
-  return output;
+  return output; // Return weight image
 }
 
 float computeFactor(const Image &im1, const Image &w1, const Image &im2,
@@ -52,17 +52,12 @@ float computeFactor(const Image &im1, const Image &w1, const Image &im2,
     }
   }
   sort(f_vec.begin(), f_vec.end());
-  cout << "Vector size" << f_vec.size() << endl;
-  cout << "Max of vector: " << f_vec[f_vec.size() - 1] << endl;
-  cout << "Min of vector: " << f_vec[0] << endl;
   if (f_vec.size() % 2 == 0) { // Take median of even number of elements vector
-  
     return (f_vec[floor(f_vec.size() / 2)] + f_vec[floor(f_vec.size() / 2 - 1)]) / 2;
   }
   else { // Take median of odd number of elements vector
     return f_vec[floor(f_vec.size() / 2)];
   }
-  // return factor;
 }
 
 Image makeHDR(vector<Image> &imSeq, float epsilonMini, float epsilonMaxi) {
@@ -73,7 +68,43 @@ Image makeHDR(vector<Image> &imSeq, float epsilonMini, float epsilonMaxi) {
   // Compute the exposure factor for each consecutive pair of image.
   // Write the valid pixel to your hdr output, taking care of rescaling them
   // properly using the factor.
-  return Image(1, 1, 1);
+  Image output(imSeq.at(0).width(), imSeq.at(0).height(), imSeq.at(0).channels()); // Initialize output
+
+  vector<float> k_i;            // Initialize vector to hold k_i values
+  k_i.push_back(1.0f);          // Add 1.0 as first factor
+  vector<Image> weights;        // Initialize vector to store weights so we don't compute multiple times
+  Image weight_0 = computeWeight(imSeq.at(0), epsilonMini, 1.0f); // First image weight
+  weights.push_back(weight_0);  // Push first weight onto vector
+
+  for (int n = 1; n < imSeq.size(); n++) { // Iterate over all and make factor compared to first image
+    if (n == imSeq.size() - 1) {
+      Image weight = computeWeight(imSeq.at(n), 0.0f, epsilonMaxi); // In brightest case, don't chop darkest
+      k_i.push_back(computeFactor(imSeq.at(n - 1), weights.at(weights.size() - 1), imSeq.at(n), weight));
+      weights.push_back(weight);
+    }
+    else {
+      Image weight = computeWeight(imSeq.at(n), epsilonMini, epsilonMaxi);
+      k_i.push_back(computeFactor(imSeq.at(n - 1), weights.at(weights.size() - 1), imSeq.at(n), weight));
+      weights.push_back(weight);
+    }
+  }
+
+  for (int h = 0; h < output.height(); h++) { // Iterate to create output image
+    for (int w = 0; w < output.width(); w++) {
+      for (int c = 0; c < output.channels(); c++) {
+
+        float denom = 0.0f, sum = 0.0f;
+        for (int n = 0; n < imSeq.size(); n++) {
+          denom += weights.at(n)(w, h, c);
+          sum += weights.at(n)(w, h, c) * (1.0f / k_i.at(n)) * imSeq.at(n)(w, h, c);
+        }
+        output(w, h, c) = sum / denom;
+
+      }
+    }
+  }
+
+  return output; // Return output HDR image
 }
 
 /**************************************************************
