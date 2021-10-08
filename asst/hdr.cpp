@@ -62,12 +62,6 @@ float computeFactor(const Image &im1, const Image &w1, const Image &im2,
 
 Image makeHDR(vector<Image> &imSeq, float epsilonMini, float epsilonMaxi) {
   // --------- HANDOUT  PS04 ------------------------------
-  // Merge images to make a single hdr image
-  // For each image in the sequence, compute the weight map (special cases
-  // for the first and last images).
-  // Compute the exposure factor for each consecutive pair of image.
-  // Write the valid pixel to your hdr output, taking care of rescaling them
-  // properly using the factor.
   Image output(imSeq.at(0).width(), imSeq.at(0).height(), imSeq.at(0).channels()); // Initialize output
 
   vector<float> k_i;            // Initialize vector to hold k_i values
@@ -83,7 +77,7 @@ Image makeHDR(vector<Image> &imSeq, float epsilonMini, float epsilonMaxi) {
       weights.push_back(weight);
     }
     else {
-      Image weight = computeWeight(imSeq.at(n), epsilonMini, epsilonMaxi);
+      Image weight = computeWeight(imSeq.at(n), epsilonMini, epsilonMaxi); // Use epsilons in normal case
       k_i.push_back(computeFactor(imSeq.at(n - 1), weights.at(weights.size() - 1), imSeq.at(n), weight));
       weights.push_back(weight);
     }
@@ -91,15 +85,17 @@ Image makeHDR(vector<Image> &imSeq, float epsilonMini, float epsilonMaxi) {
 
   for (int h = 0; h < output.height(); h++) { // Iterate to create output image
     for (int w = 0; w < output.width(); w++) {
-      for (int c = 0; c < output.channels(); c++) {
+      for (int c = 0; c < output.channels(); c++) { // Row-major order, over all channels
 
-        float denom = 0.0f, sum = 0.0f;
+        float denom = 0.0f, sum = 0.0f, factor = 1.0f; // Initialize variables for pixel calculation
         for (int n = 0; n < imSeq.size(); n++) {
-          denom += weights.at(n)(w, h, c);
-          sum += weights.at(n)(w, h, c) * (1.0f / k_i.at(n)) * imSeq.at(n)(w, h, c);
+          for (int m = 0; m < n; m++) {
+            factor *= k_i.at(m + 1) / k_i.at(m); // Chain previous factors together
+          }
+          denom += weights.at(n)(w, h, c);       // Divide by weight summation
+          sum += weights.at(n)(w, h, c) * (1 / factor) * imSeq.at(n)(w, h, c); // Perform formula
         }
-        output(w, h, c) = sum / denom;
-
+        output(w, h, c) = sum / denom; // Set pixel to summation divided by weight summation
       }
     }
   }
