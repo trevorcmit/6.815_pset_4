@@ -168,15 +168,19 @@ void testToneMapping_design() {
 // This is a way for you to test your functions.
 // We will only grade the contents of demosaic.cpp and align.cpp
 int main() {
-  cout << "nothing done in a4_main.cpp, debug me !" << endl;
+  clock_t start = clock();
+  // cout << "nothing done in a4_main.cpp, debug me !" << endl;
 
   // testComputeWeight();
-  // testComputeFactor();
+  testComputeFactor();
   // testMakeHDR();
   // testToneMapping_ante2();
   // testToneMapping_ante3();
   // testToneMapping_boston();
   // testToneMapping_design();
 
+  clock_t end = clock();
+  double duration = (end - start) * 1.0f / CLOCKS_PER_SEC;
+  cout << "a4_main.cpp runtime: " << duration << "s" << endl;
   return 0;
 }

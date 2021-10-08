@@ -21,7 +21,7 @@ Image computeWeight(const Image &im, float epsilonMini, float epsilonMaxi) {
   for (int h = 0; h < output.height(); h++) {
     for (int w = 0; w < output.width(); w++) {
       for (int c = 0; c < output.channels(); c++) {
-        if (output(w, h, c) <= 0.99 && output(w, h, c) >= 0.002) {
+        if ((im(w, h, c) <= 0.99) && (im(w, h, c) >= 0.002)) {
           output(w, h, c) = 1.0f; // 1 if inside range
         }
         else {
@@ -30,7 +30,7 @@ Image computeWeight(const Image &im, float epsilonMini, float epsilonMaxi) {
       }
     }
   }
-  return im;
+  return output;
 }
 
 float computeFactor(const Image &im1, const Image &w1, const Image &im2,
@@ -40,18 +40,29 @@ float computeFactor(const Image &im1, const Image &w1, const Image &im2,
   // gives us the relative exposure between im1 and im2. It is computed as
   // the median of im2/(im1+eps) for some small eps, taking into account
   // pixels that are valid in both images.
-  float factor;
+  vector<float> f_vec;
   Image im1_adj = im1 + 0.0000000001; // Add correction value for divide by zero errors
   for (int h = 0; h < im1.height(); h++) {
     for (int w = 0; w < im1.width(); w++) {
       for (int c = 0; c < im1.channels(); c++) {
-        if (w1(w, h, c) > 0.9 && w2(w, h, c) > 0.9) { // If weights for both are 1 at this pixel
-          factor += im2(w, h, c) / im1_adj(w, h, c);  // Add quotient to factor
+        if ((w1(w, h, c) > 0.9) && (w2(w, h, c) > 0.9)) { // If weights for both are 1 at this pixel
+          f_vec.push_back(im2(w, h, c) / im1_adj(w, h, c)); // Add quotient to factor
         }
       }
     }
   }
-  return 0.0f;
+  sort(f_vec.begin(), f_vec.end());
+  cout << "Vector size" << f_vec.size() << endl;
+  cout << "Max of vector: " << f_vec[f_vec.size() - 1] << endl;
+  cout << "Min of vector: " << f_vec[0] << endl;
+  if (f_vec.size() % 2 == 0) { // Take median of even number of elements vector
+  
+    return (f_vec[floor(f_vec.size() / 2)] + f_vec[floor(f_vec.size() / 2 - 1)]) / 2;
+  }
+  else { // Take median of odd number of elements vector
+    return f_vec[floor(f_vec.size() / 2)];
+  }
+  // return factor;
 }
 
 Image makeHDR(vector<Image> &imSeq, float epsilonMini, float epsilonMaxi) {
