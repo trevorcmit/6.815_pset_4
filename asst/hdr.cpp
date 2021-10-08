@@ -17,6 +17,19 @@ Image computeWeight(const Image &im, float epsilonMini, float epsilonMaxi) {
   // Generate a weight image that indicates which pixels are good to use in
   // HDR, i.e. weight=1 when the pixel value is in [epsilonMini, epsilonMaxi].
   // The weight is per pixel, per channel.
+  Image output(im.width(), im.height(), im.channels()); // Initialize output image
+  for (int h = 0; h < output.height(); h++) {
+    for (int w = 0; w < output.width(); w++) {
+      for (int c = 0; c < output.channels(); c++) {
+        if (output(w, h, c) <= 0.99 && output(w, h, c) >= 0.002) {
+          output(w, h, c) = 1.0f; // 1 if inside range
+        }
+        else {
+          output(w, h, c) = 0.0f; // 0 otherwise
+        }
+      }
+    }
+  }
   return im;
 }
 
@@ -27,6 +40,17 @@ float computeFactor(const Image &im1, const Image &w1, const Image &im2,
   // gives us the relative exposure between im1 and im2. It is computed as
   // the median of im2/(im1+eps) for some small eps, taking into account
   // pixels that are valid in both images.
+  float factor;
+  Image im1_adj = im1 + 0.0000000001; // Add correction value for divide by zero errors
+  for (int h = 0; h < im1.height(); h++) {
+    for (int w = 0; w < im1.width(); w++) {
+      for (int c = 0; c < im1.channels(); c++) {
+        if (w1(w, h, c) > 0.9 && w2(w, h, c) > 0.9) { // If weights for both are 1 at this pixel
+          factor += im2(w, h, c) / im1_adj(w, h, c);  // Add quotient to factor
+        }
+      }
+    }
+  }
   return 0.0f;
 }
 
