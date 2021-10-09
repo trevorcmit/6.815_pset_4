@@ -51,7 +51,7 @@ float computeFactor(const Image &im1, const Image &w1, const Image &im2,
       }
     }
   }
-  sort(f_vec.begin(), f_vec.end());
+  sort(f_vec.begin(), f_vec.end()); // Sort in ascending order
   if (f_vec.size() % 2 == 0) { // Take median of even number of elements vector
     return (f_vec[floor(f_vec.size() / 2)] + f_vec[floor(f_vec.size() / 2 - 1)]) / 2;
   }
@@ -113,7 +113,13 @@ Image toneMap(const Image &im, float targetBase, float detailAmp, bool useBila,
   // - Split the image into its luminance-chrominance components.
   // - Work in the log10 domain for the luminance
   // -
-  return im;
+  Image output(im.width(), im.height(), im.channels()); // Initialize output image
+  vector<Image> lumiChromi_vect = lumiChromi(im); // Create lumi/chromi and set to variables
+  Image lumi = lumiChromi_vect.at(0), chromi = lumiChromi_vect.at(1);
+
+  Image log10lumi = log10Image(lumi); // Turn luminance into log10 scale
+
+  return output; // Return output tone-mapped image
 }
 
 /*********************************************************************
@@ -126,7 +132,17 @@ Image log10Image(const Image &im) {
   // Taking a linear image im, transform to log10 scale.
   // To avoid infinity issues, make any 0-valued pixel be equal the the
   // minimum non-zero value. See image_minnonzero(im).
-  return im;
+  Image input = im + image_minnonzero(im); // Add minnonzero value
+
+  Image output(im.width(), im.height(), im.channels());
+  for (int h = 0; h < im.height(); h++) { // Iterate to find overall min
+    for (int w = 0; w < im.width(); w++) {
+      for (int c = 0; c < im.channels(); c++) {
+        output(w, h, c) = log10(input(w, h, c)); // Put pixel in output after log10 scale
+      }
+    }
+  }
+  return output; // Return output image in log10 scale
 }
 
 // Image --> 10^Image
@@ -142,5 +158,15 @@ float image_minnonzero(const Image &im) {
   // --------- HANDOUT  PS04 ------------------------------
   // return the smallest value in the image that is non-zeros (across all
   // channels too)
-  return 0.0f;
-}
+  float min = 1.0f;
+  for (int h = 0; h < im.height(); h++) { // Iterate to find overall min
+    for (int w = 0; w < im.width(); w++) {
+      for (int c = 0; c < im.channels(); c++) {
+        if (im(w, h, c) > 0.0f && im(w, h, c) < min) {
+          min = im(w, h, c); // If greater than zero and less than current minimum, save
+        }
+      }
+    }
+  }
+  return min;
+  }
