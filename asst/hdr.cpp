@@ -106,8 +106,7 @@ Image makeHDR(vector<Image> &imSeq, float epsilonMini, float epsilonMaxi) {
  //                      TONE MAPPING                        //
  *************************************************************/
 
-Image toneMap(const Image &im, float targetBase, float detailAmp, bool useBila,
-              float sigmaRange) {
+Image toneMap(const Image &im, float targetBase, float detailAmp, bool useBila, float sigmaRange) {
   // --------- HANDOUT  PS04 ------------------------------
   // tone map an hdr image
   // - Split the image into its luminance-chrominance components.
@@ -118,6 +117,22 @@ Image toneMap(const Image &im, float targetBase, float detailAmp, bool useBila,
   Image lumi = lumiChromi_vect.at(0), chromi = lumiChromi_vect.at(1);
 
   Image log10lumi = log10Image(lumi); // Turn luminance into log10 scale
+
+  float spatial_SD = 0.0f;
+  if (im.width() > im.height()) { // Get sigma for spatial Gaussian
+    spatial_SD = im.width() / 50.0f; // Width is larger
+  }
+  else {
+    spatial_SD = im.height() / 50.0f; // Height is larger
+  }
+
+  Image base_lumi(im.width(), im.height(), im.channels()); // Make base (blurry luminance)
+  if (useBila) {
+    base_lumi = bilateral(log10lumi, sigmaRange, spatial_SD, 3.0f); // Bilateral version
+  }
+  else {
+    base_lumi = gaussianBlur_separable(log10lumi, spatial_SD, 3.0f); // Gaussian version
+  }
 
   return output; // Return output tone-mapped image
 }
