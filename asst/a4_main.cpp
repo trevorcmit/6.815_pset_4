@@ -72,6 +72,15 @@ void testMakeHDR() {
   hdrScale8.write("./Output/scaledHDR_design_8.png");
   Image hdrScale10 = gamma_code((2e10) * hdr / maxVal, 2.2);
   hdrScale10.write("./Output/scaledHDR_design_10.png");
+
+  // load images
+  vector<Image> imSeq0;
+  imSeq0.push_back(gamma_code(Image("./Input/ante2-1.png"), 1.0 / 2.2));
+  imSeq0.push_back(gamma_code(Image("./Input/ante2-2.png"), 1.0 / 2.2));
+  Image hdr0 = makeHDR(imSeq0);
+  float maxVal0 = hdr0.max();
+  Image hdrScale000 = gamma_code(hdr0 / maxVal0, 2.2);
+  hdrScale000.write("./Output/scaledHDR_ante2.png");
 }
 
 // HDR and Tone Mapping on Ante2 images
@@ -161,6 +170,11 @@ void testToneMapping_design() {
   tm = gamma_code(tm, 2.2);
   tm.write("./Output/design-tonedHDRsimple-gauss.png");
 
+  // tone map with bilateral
+  tm = toneMap(hdr, 100, 3, true, 0.1);
+  tm = gamma_code(tm, 2.2);
+  tm.write("./Output/design-tonedHDRsimple-bilateral.png");
+
   // Note: bilateral filtering these images takes a very long time. It is not
   // necessary to attempt this for testing
 }
@@ -173,11 +187,11 @@ int main() {
 
   // testComputeWeight();
   // testComputeFactor();
-  testMakeHDR();
+  // testMakeHDR();
   // testToneMapping_ante2();
   // testToneMapping_ante3();
   // testToneMapping_boston();
-  // testToneMapping_design();
+  testToneMapping_design();
 
   clock_t end = clock();
   double duration = (end - start) * 1.0f / CLOCKS_PER_SEC;

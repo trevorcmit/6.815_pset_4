@@ -95,7 +95,14 @@ Image makeHDR(vector<Image> &imSeq, float epsilonMini, float epsilonMaxi) {
           denom += weights.at(n)(w, h, c);       // Divide by weight summation
           sum += weights.at(n)(w, h, c) * (1 / factor) * imSeq.at(n)(w, h, c); // Perform formula
         }
+
+        if (denom < 1.0) {
+          output(w, h, c) = imSeq.at(0)(w, h, c);
+        }
+        else {
         output(w, h, c) = sum / denom; // Set pixel to summation divided by weight summation
+        }
+        
       }
     }
   }
@@ -136,6 +143,21 @@ Image toneMap(const Image &im, float targetBase, float detailAmp, bool useBila, 
 
   Image difference = log10lumi - base_lumi; // Detail is difference of log luminance minus base
 
+  // Reduce constrast on the base image
+  base_lumi = base_lumi * (log10(targetBase)) / (base_lumi.max() - base_lumi.min());
+  float curr_max = base_lumi.max();
+  base_lumi = base_lumi - curr_max; // Add offset
+
+  // Multiply details
+  difference = difference * detailAmp;
+
+  Image new_log_lumi = base_lumi + difference; // Recombine scaled details and base
+
+  Image new_lumi = exp10Image(new_log_lumi); // Convert back to log domain
+
+  vector<Image> new_lumichromi = {new_lumi, chromi};
+  output = lumiChromi2rgb(new_lumichromi);
+
   return output; // Return output tone-mapped image
 }
 
@@ -167,7 +189,15 @@ Image exp10Image(const Image &im) {
   // --------- HANDOUT  PS04 ------------------------------
   // take an image in log10 domain and transform it back to linear domain.
   // see pow(a, b)
-  return im;
+  Image output(im.width(), im.height(), im.channels());
+  for (int h = 0; h < im.height(); h++) { // Iterate to find overall min
+    for (int w = 0; w < im.width(); w++) {
+      for (int c = 0; c < im.channels(); c++) {
+        output(w, h, c) = pow(10, im(w, h, c)); // Put pixel in output after log10 scale
+      }
+    }
+  }
+  return output; // Return output image in log10 scale
 }
 
 // min non-zero pixel value of image
