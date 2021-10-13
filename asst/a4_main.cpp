@@ -185,13 +185,13 @@ int main() {
   clock_t start = clock();
   // cout << "nothing done in a4_main.cpp, debug me !" << endl;
 
-  // testComputeWeight();
-  // testComputeFactor();
-  // testMakeHDR();
-  // testToneMapping_ante2();
-  // testToneMapping_ante3();
-  // testToneMapping_boston();
-  testToneMapping_design();
+  testComputeWeight();
+  testComputeFactor();
+  testMakeHDR();
+  testToneMapping_ante2();
+  testToneMapping_ante3();
+  testToneMapping_boston();
+  // testToneMapping_design();
 
   clock_t end = clock();
   double duration = (end - start) * 1.0f / CLOCKS_PER_SEC;

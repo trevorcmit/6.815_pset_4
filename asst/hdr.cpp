@@ -95,14 +95,12 @@ Image makeHDR(vector<Image> &imSeq, float epsilonMini, float epsilonMaxi) {
           denom += weights.at(n)(w, h, c);       // Divide by weight summation
           sum += weights.at(n)(w, h, c) * (1 / factor) * imSeq.at(n)(w, h, c); // Perform formula
         }
-
-        if (denom < 1.0) {
+        if (denom < 1.0) { // If no pixels have weight, take the pixel from the first image
           output(w, h, c) = imSeq.at(0)(w, h, c);
         }
         else {
         output(w, h, c) = sum / denom; // Set pixel to summation divided by weight summation
         }
-        
       }
     }
   }
@@ -118,7 +116,6 @@ Image toneMap(const Image &im, float targetBase, float detailAmp, bool useBila, 
   // tone map an hdr image
   // - Split the image into its luminance-chrominance components.
   // - Work in the log10 domain for the luminance
-  // -
   Image output(im.width(), im.height(), im.channels()); // Initialize output image
   vector<Image> lumiChromi_vect = lumiChromi(im); // Create lumi/chromi and set to variables
   Image lumi = lumiChromi_vect.at(0), chromi = lumiChromi_vect.at(1);
@@ -155,7 +152,7 @@ Image toneMap(const Image &im, float targetBase, float detailAmp, bool useBila, 
 
   Image new_lumi = exp10Image(new_log_lumi); // Convert back to log domain
 
-  vector<Image> new_lumichromi = {new_lumi, chromi};
+  vector<Image> new_lumichromi = {new_lumi, chromi}; // Make vector to convert to RGB
   output = lumiChromi2rgb(new_lumichromi);
 
   return output; // Return output tone-mapped image
