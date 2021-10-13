@@ -119,7 +119,7 @@ Image toneMap(const Image &im, float targetBase, float detailAmp, bool useBila, 
   Image log10lumi = log10Image(lumi); // Turn luminance into log10 scale
 
   float spatial_SD = 0.0f;
-  if (im.width() > im.height()) { // Get sigma for spatial Gaussian
+  if (im.width() > im.height()) {    // Get sigma for spatial Gaussian
     spatial_SD = im.width() / 50.0f; // Width is larger
   }
   else {
@@ -133,6 +133,8 @@ Image toneMap(const Image &im, float targetBase, float detailAmp, bool useBila, 
   else {
     base_lumi = gaussianBlur_separable(log10lumi, spatial_SD, 3.0f); // Gaussian version
   }
+
+  Image difference = log10lumi - base_lumi; // Detail is difference of log luminance minus base
 
   return output; // Return output tone-mapped image
 }
